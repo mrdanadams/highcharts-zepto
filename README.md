@@ -14,7 +14,9 @@ Include it between zepto and highcharts:
 <script src="highcharts.src.js"></script>
 ```
 
-`index.html` provides an example.
+Use `highcharts-zepto.src.js` but get the others from the official distributions.
+
+See the examples for additional samples.
 
 ## License
 

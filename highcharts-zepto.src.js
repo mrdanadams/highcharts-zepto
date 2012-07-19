@@ -11,21 +11,25 @@ function extend(a, b) {
   return a;
 }
 
-// bundle in MicroEvent (https://github.com/jeromeetienne/microevent.js)
 // needed to handle events on non-DOM objects
-/**
- * MicroEvent - to make any js object an event emitter (server or browser)
- * 
- * - pure javascript - server compatible, browser compatible
- * - dont rely on the browser doms
- * - super simple - you get it immediatly, no mistery, no magic involved
- *
- * - create a MicroEventDebug with goodies to debug
- *   - make it safer to use
-*/
+var Evt = (function() {
+  var con = function(type) {
+    this.type = type;
+    this.defaultPrevented = false;
+  }
 
-var MicroEvent  = function(){}
-MicroEvent.prototype  = {
+  con.prototype = {
+  };
+
+  return con;
+})();
+
+var Events = {
+  eventify: function(o) {
+    if (o._events) return;
+    o._events = {};
+    extend(o, Events);
+  },
   bind  : function(event, fct){
     this._events = this._events || {};
     this._events[event] = this._events[event] || [];
@@ -36,19 +40,20 @@ MicroEvent.prototype  = {
     if( event in this._events === false  )  return;
     this._events[event].splice(this._events[event].indexOf(fct), 1);
   },
-  trigger : function(event /* , args... */){
+  // returns false if a handler returned false to cancel bubbling
+  trigger : function(event) {
     this._events = this._events || {};
-    if( event in this._events === false  )  return;
-    for(var i = 0; i < this._events[event].length; i++){
-      this._events[event][i].apply(this, Array.prototype.slice.call(arguments, 1))
+    if( event.type in this._events === false  )  return;
+    var i=0, evts=this._events[event.type], len = evts.length;
+    for(; i<len; i++){
+      if (evts[i].call(this, event) === false || event.defaultPrevented) {
+        event.defaultPrevented = true;
+      }
     }
+    if (event.defaultPrevented) return false;
   }
 };
 
-function eventify(o) {
-  if (o._events) return;
-  extend(o, MicroEvent.prototype);
-}
 
 win.HighchartsAdapter = {
   /**
@@ -151,8 +156,9 @@ win.HighchartsAdapter = {
    * @param {Function} fn The event handler
    */
   addEvent: function (el, event, fn) {
+    // console.log("add "+event+" "+(typeof el)+" "+el.nodeType+" "+el.tagName);
     if (typeof el.nodeType == "undefined") {
-      eventify(el);
+      Events.eventify(el);
       el.bind(event, fn);
     } else
       $(el).on(event, fn);
@@ -166,7 +172,7 @@ win.HighchartsAdapter = {
    */
   removeEvent: function (el, eventType, handler) {
     if (typeof el.nodeType == "undefined") {
-      eventify(el);
+      Events.eventify(el);
       el.unbind(eventType, handler);
     } else
       $(el).off(eventType, handler);
@@ -180,15 +186,24 @@ win.HighchartsAdapter = {
    * @param {Function} defaultFunction
    */
   fireEvent: function (el, type, eventArguments, defaultFunction) {
+    var evt;
+
     if (typeof el.nodeType == "undefined") {
-      eventify(el);
-      el.trigger(type);
-      // TODO need eventArguments?
+      evt = new Evt(type);
+      evt.target = el;
+      if (eventArguments) extend(evt, eventArguments);
+
+      // console.log("non-dom "+evt.type);
+      Events.eventify(el);
+      el.trigger(evt);
+      if (defaultFunction && !evt.defaultPrevented)
+        defaultFunction.call(el, evt);
     } else {
-      var evt = $.Event(type);
-      extend(evt, eventArguments);
+      evt = $.Event(type);
+      evt.target = el;
+      if (eventArguments) extend(evt, eventArguments);
+      // console.log(evt);
       $(el).trigger(evt);
-      // FIXME check for defaultFunction
     }
   },
 
