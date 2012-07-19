@@ -70,7 +70,8 @@ win.HighchartsAdapter = {
   adapterRun: function (el, method) {
     // This currently works for getting inner width and height. If adding
     // more methods later, we need a conditional implementation for each.
-    return +$(el).css(method);
+    el = $(el);
+    return el[method].call(el);
   },
 
   /**
