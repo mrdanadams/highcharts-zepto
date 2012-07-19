@@ -128,20 +128,36 @@ win.HighchartsAdapter = {
    * Deep merge two objects and return a third
    */
   // note: gets actually called with any number of hashes, not just 2...
+  // note: objects must always be copied, never assigned (or you get weird data sharing and side-effects)
   merge: (function() {
     var merge = function() {
       if (arguments.length == 1) return arguments[0];
 
-      var o = {}, i=0, len = arguments.length, obj, k;
+      var o = {}, i=0, len = arguments.length, obj, k, v;
 
       for(; i<len; i++) {
         obj = arguments[i];
 
         for(k in obj) {
-          if (typeof o[k] == "object" && typeof obj[k] == "object")
-            o[k] = merge(o[k], obj[k]);
-          else
+          v = obj[k];
+          if (v && typeof v == "object") {
+            if (v.constructor === Array) {
+              // TODO arrays not deep copied
+              o[k] = v;
+            } else {
+              // if (o[k] && typeof o[k] != "object") throw "merging with non-object";
+              // console.log("merging "+k);
+              o[k] = merge(o[k] || {}, obj[k]);
+            }
+            // console.log(o[k]);
+            // console.log(obj[k]);
+            // console.log(o[k]);
+          }
+          else {
+            // if (typeof o[k] != "undefined") console.log("setting "+k+" "+o[k]+" "+obj[k]);
+            // if (obj[k] && typeof obj[k] == "object") throw "don't assign objects";
             o[k] = obj[k];
+          }
         }
       }
       return o;
