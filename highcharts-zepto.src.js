@@ -1,4 +1,5 @@
 // Highcharts Zepto.js adapter
+// TODO include github link
 // Load after zepto and before highcharts
 // see ~highcharts.src.js:964 for the defined adapter functions
 (function() {
@@ -174,7 +175,7 @@ win.HighchartsAdapter = {
    */
   addEvent: function (el, event, fn) {
     // console.log("add "+event+" "+(typeof el)+" "+el.nodeType+" "+el.tagName);
-    if (typeof el.nodeType == "undefined") {
+    if (typeof el.nodeType == "undefined" && !(el instanceof Window)) {
       Events.eventify(el);
       el.bind(event, fn);
     } else
