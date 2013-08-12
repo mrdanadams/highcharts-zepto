@@ -175,7 +175,7 @@ win.HighchartsAdapter = {
    */
   addEvent: function (el, event, fn) {
     // console.log("add "+event+" "+(typeof el)+" "+el.nodeType+" "+el.tagName);
-    if (typeof el.nodeType == "undefined" && !(el instanceof Window)) {
+    if (typeof el.nodeType == "undefined" && !(el instanceof window.constructor)) {
       Events.eventify(el);
       el.bind(event, fn);
     } else
