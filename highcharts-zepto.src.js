@@ -89,6 +89,8 @@ win.HighchartsAdapter = {
     script.onload = callback;
     script.appendTo(head);
   },
+  
+  inArray: $.inArray,
 
   // note: the default implementation in highcharts is wrong...
   each: function (arr, fn) {
